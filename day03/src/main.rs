@@ -1,7 +1,3 @@
-#![allow(dead_code, unused_variables, unused_mut)]
-
-use std::collections::HashSet;
-
 fn main() -> std::io::Result<()> {
     let raw_test = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day03/src/test.txt")?;
     let test = parse_input(raw_test);
@@ -24,45 +20,59 @@ fn part_1(input: &Vec<Vec<String>>) -> i32 {
     (0..input.len())
         .map(|r| {
             (0..input[r].len())
-                .filter(|&c| input[r][c].parse::<i32>().is_ok())
-                .filter_map(|c| get_part_numbers(r, c, &input))
-                .collect::<HashSet<_>>()
+                .filter(|&c| input[r][c].len() == 1 && input[r][c] != ".")
+                .map(|c| get_part_numbers(r, c, &input))
+                .flatten()
+                .collect::<Vec<_>>()
         })
         .flatten()
         .sum()
 }
 
-fn get_part_numbers(r: usize, c: usize, arr: &Vec<Vec<String>>) -> Option<i32> {
-    const NEIGHBORS: [(i32, i32); 8] = [
-        (-1, -1),
-        (-1, 0),
-        (-1, 1),
-        (0, -1),
-        (0, 1),
-        (1, -1),
-        (1, 0),
-        (1, 1),
-    ];
-
-    let coords_valid = |x: i32, y: i32| -> bool {
-        x >= 0 && x < arr.len() as i32 && y >= 0 && y < arr[0].len() as i32
+fn get_part_numbers(r: usize, c: usize, arr: &Vec<Vec<String>>) -> Vec<i32> {
+    let (i, j) = (c.saturating_sub(1), (c + 2).min(arr[r].len()));
+    let get_line = |arr: &Vec<String>| {
+        let mut line: Vec<_> = arr[i..j]
+            .into_iter()
+            .map(|n| {
+                if let Ok(num) = n.parse::<i32>() {
+                    num
+                } else {
+                    0
+                }
+            })
+            .collect();
+        line.dedup();
+        line.into_iter().filter(|&n| n != 0)
     };
 
-    let (x0, y0) = (r as i32, c as i32);
+    let mut nums = vec![];
 
-    for (x1, y1) in NEIGHBORS {
-        let (x, y) = (x0 + x1, y0 + y1);
-        if coords_valid(x, y) {
-            let (x, y) = (x as usize, y as usize);
-            let val = arr[x][y].clone();
+    // Top
+    if r > 0 {
+        nums.extend(get_line(&arr[r - 1]));
+    }
 
-            if val.parse::<i32>().is_err() && val != "." {
-                return arr[r][c].parse().ok();
-            }
+    // Bottom
+    if r < arr.len() - 1 {
+        nums.extend(get_line(&arr[r + 1]))
+    }
+
+    // Left
+    if c > 0 {
+        if let Ok(num) = arr[r][c - 1].parse::<i32>() {
+            nums.push(num)
         }
     }
 
-    None
+    // Right
+    if c < arr[r].len() - 1 {
+        if let Ok(num) = arr[r][c + 1].parse::<i32>() {
+            nums.push(num)
+        }
+    }
+
+    nums
 }
 
 fn parse_input(input: String) -> Vec<Vec<String>> {
