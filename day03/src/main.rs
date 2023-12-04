@@ -5,7 +5,10 @@ use std::collections::HashSet;
 fn main() -> std::io::Result<()> {
     let raw_test = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day03/src/test.txt")?;
     let test = parse_input(raw_test);
-    test.iter().for_each(|s| println!("{s:?}"));
+    test.iter().for_each(|v| {
+        v.iter().for_each(|s| print!("{s:^5}"));
+        print!("\n");
+    });
 
     println!("[TEST 1]: {}", part_1(&test));
 
@@ -21,9 +24,8 @@ fn part_1(input: &Vec<Vec<String>>) -> i32 {
     (0..input.len())
         .map(|r| {
             (0..input[r].len())
-                .map(|c| (r, c))
-                .filter(|&(r, c)| input[r][c].parse::<i32>().is_ok())
-                .filter_map(|(r, c)| get_part_numbers(r, c, &input))
+                .filter(|&c| input[r][c].parse::<i32>().is_ok())
+                .filter_map(|c| get_part_numbers(r, c, &input))
                 .collect::<HashSet<_>>()
         })
         .flatten()
