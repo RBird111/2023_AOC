@@ -4,7 +4,7 @@ use regex::Regex;
 use std::collections::HashMap;
 
 fn main() -> std::io::Result<()> {
-    let input = std::fs::read_to_string("./src/input.txt")?;
+    let input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day01/src/input.txt")?;
 
     let part_1: i32 = input.lines().map(map_1).sum();
     println!("[PART 1]: {}", part_1);
@@ -51,7 +51,7 @@ fn map_2(s: &str) -> i32 {
         .captures_iter(&s.chars().rev().collect::<String>())
         .map(|c| c.extract())
         .find_map(|(n, [])| {
-            let n = n.chars().rev().collect::<String>();
+            let n: String = n.chars().rev().collect();
             num_map.get(n.as_str())
         })
         .unwrap();

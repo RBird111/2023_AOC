@@ -4,7 +4,7 @@ use regex::Regex;
 use std::collections::HashMap;
 
 fn main() -> std::io::Result<()> {
-    let test = std::fs::read_to_string("./src/test.txt")?;
+    let test = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day02/src/test.txt")?;
     let test: i32 = test
         .lines()
         .map(to_color_map)
@@ -13,7 +13,7 @@ fn main() -> std::io::Result<()> {
         .sum();
     println!("[TEST]: {test}");
 
-    let input = std::fs::read_to_string("./src/input.txt")?;
+    let input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day02/src/input.txt")?;
 
     let part_1: i32 = input
         .lines()
