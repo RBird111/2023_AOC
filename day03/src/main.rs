@@ -19,14 +19,12 @@ fn main() -> std::io::Result<()> {
 
 fn part_1(input: &Vec<Vec<String>>) -> i32 {
     (0..input.len())
-        .map(|r| {
+        .flat_map(|r| {
             (0..input[r].len())
                 .filter(|&c| input[r][c].parse::<i32>().is_err() && input[r][c] != ".")
-                .map(|c| get_part_numbers(r, c, &input))
-                .flatten()
+                .flat_map(|c| get_part_numbers(r, c, &input))
                 .collect::<Vec<_>>()
         })
-        .flatten()
         .sum()
 }
 
