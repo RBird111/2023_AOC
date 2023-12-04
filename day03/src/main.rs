@@ -5,6 +5,7 @@ fn main() -> std::io::Result<()> {
         v.iter().for_each(|s| print!("{s:^5}"));
         print!("\n");
     });
+    println!("");
 
     println!("[TEST 1]: {}", part_1(&test));
 
@@ -20,7 +21,7 @@ fn part_1(input: &Vec<Vec<String>>) -> i32 {
     (0..input.len())
         .map(|r| {
             (0..input[r].len())
-                .filter(|&c| input[r][c].len() == 1 && input[r][c] != ".")
+                .filter(|&c| input[r][c].parse::<i32>().is_err() && input[r][c] != ".")
                 .map(|c| get_part_numbers(r, c, &input))
                 .flatten()
                 .collect::<Vec<_>>()
