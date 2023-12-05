@@ -7,12 +7,15 @@ fn main() -> std::io::Result<()> {
     });
     println!("");
 
-    println!("[TEST 1]: {}", part_1(&test));
 
     let raw_input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day03/src/input.txt")?;
     let input = parse_input(raw_input);
 
+    println!("[TEST 1]: {}", part_1(&test));
     println!("[PART 1]: {}", part_1(&input));
+
+    println!("[TEST 2]: {}", part_2(&test));
+    println!("[PART 2]: {}", part_2(&input));
 
     Ok(())
 }
@@ -23,6 +26,19 @@ fn part_1(input: &Vec<Vec<String>>) -> i32 {
             (0..input[r].len())
                 .filter(|&c| input[r][c].parse::<i32>().is_err() && input[r][c] != ".")
                 .flat_map(|c| get_part_numbers(r, c, &input))
+                .collect::<Vec<_>>()
+        })
+        .sum()
+}
+
+fn part_2(input: &Vec<Vec<String>>) -> i32 {
+    (0..input.len())
+        .flat_map(|r| {
+            (0..input[r].len())
+                .filter(|&c| input[r][c] == "*")
+                .map(|c| get_part_numbers(r, c, &input))
+                .filter(|v| v.len() == 2)
+                .map(|v| v.into_iter().product::<i32>())
                 .collect::<Vec<_>>()
         })
         .sum()
