@@ -1,5 +1,3 @@
-#![allow(dead_code, unused_variables)]
-
 fn main() -> std::io::Result<()> {
     let input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day06/src/input.txt")?;
 
@@ -102,7 +100,7 @@ mod test {
     }
 
     #[test]
-    fn test_counts_win_scenarios() {
+    fn test_count_win_scenarios() {
         let expected = vec![4, 8, 9];
         let actual: Vec<_> = parse_input_1(&INPUT)
             .into_iter()
