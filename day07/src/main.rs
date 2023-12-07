@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 fn main() -> std::io::Result<()> {
     let input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day07/src/input.txt")?;
 
@@ -12,310 +10,99 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn part_1(input: &String) -> u64 {
-    let mut hands: Vec<_> = input.lines().map(Hand::new).collect();
-    hands.sort_unstable_by(Hand::compare_cards);
-    hands
-        .iter_mut()
-        .rev()
-        .enumerate()
-        .for_each(|(idx, hand)| hand.set_rank(idx));
-    hands.into_iter().map(|hand| hand.get_payout()).sum()
+static CARD_ORDER_1: &str = "23456789TJQKA";
+static CARD_ORDER_2: &str = "J23456789TQKA";
+
+pub fn part_1(input: &String) -> u64 {
+    let mut hands: Vec<Vec<u64>> = input.lines().map(|h| parse_hand(h, 1)).collect();
+    hands.iter_mut().for_each(score_hand);
+    sort_and_rank(&mut hands);
+    sum_payout(hands)
 }
 
-fn part_2(input: &String) -> u64 {
-    let mut hands: Vec<_> = input.lines().map(HandAlt::new).collect();
-    hands.sort_unstable_by(HandAlt::compare_cards);
-    hands
-        .iter_mut()
-        .rev()
-        .enumerate()
-        .for_each(|(idx, hand)| hand.set_rank(idx));
-    hands
+pub fn part_2(input: &String) -> u64 {
+    let mut hands: Vec<Vec<u64>> = input.lines().map(|h| parse_hand(h, 2)).collect();
+    hands.iter_mut().for_each(get_best_score);
+    sort_and_rank(&mut hands);
+    sum_payout(hands)
+}
+
+fn parse_hand(s: &str, ordering: u64) -> Vec<u64> {
+    use std::collections::HashMap;
+
+    let order = match ordering {
+        1 => CARD_ORDER_1,
+        2 => CARD_ORDER_2,
+        _ => unreachable!(),
+    };
+
+    let map: HashMap<u8, u64> = order.bytes().zip(0..).collect();
+    let arr: Vec<_> = s.split_ascii_whitespace().collect();
+    let hand: Vec<u64> = arr[0].bytes().map(|b| map[&b]).collect();
+    let bid: Vec<u64> = vec![arr[1].parse().unwrap()];
+
+    [vec![0], hand, vec![0], bid].concat()
+}
+
+fn score_hand(hand: &mut Vec<u64>) {
+    let mut count = vec![0; 13];
+    hand[1..6]
         .into_iter()
-        .inspect(|h| println!("{h:?}"))
-        .map(|hand| hand.get_payout())
-        .sum()
+        .map(|c| *c as usize)
+        .for_each(|c| count[c] += 1);
+
+    count = count.into_iter().filter(|&n| n != 0).collect();
+    count.sort_unstable();
+
+    hand[0] = match &count[..] {
+        [5] => 6,
+        [1, 4] => 5,
+        [2, 3] => 4,
+        [1, 1, 3] => 3,
+        [1, 2, 2] => 2,
+        [1, 1, 1, 2] => 1,
+        _ => 0,
+    };
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct HandAlt {
-    hand_type: HandTypeAlt,
-    cards: Vec<CardAlt>,
-    rank: u64,
-    bid: u64,
-}
-
-impl HandAlt {
-    fn new(line: &str) -> Self {
-        let arr: Vec<_> = line.split_ascii_whitespace().collect();
-        let (hand, bid) = (arr[0], arr[1]);
-
-        let cards: Vec<CardAlt> = hand.chars().map(CardAlt::new).collect();
-        let hand_type = HandTypeAlt::new(&cards);
-        let bid: u64 = bid.parse().expect("error parsing bid");
-
-        Self {
-            hand_type,
-            cards,
-            rank: 0,
-            bid,
-        }
-    }
-
-    fn set_rank(&mut self, idx: usize) {
-        self.rank = (idx + 1) as u64;
-    }
-
-    fn compare_cards(&self, other: &HandAlt) -> Ordering {
-        if self.hand_type == other.hand_type {
-            let mut i = 0;
-            while i < 5 && self.cards[i] == other.cards[i] {
-                i += 1;
-            }
-            other.cards[i.min(4)].cmp(&self.cards[i.min(4)])
-        } else {
-            self.cmp(&other)
-        }
-    }
-
-    fn get_payout(&self) -> u64 {
-        self.rank * self.bid
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-struct Hand {
-    hand_type: HandType,
-    cards: Vec<Card>,
-    rank: u64,
-    bid: u64,
-}
-
-impl Hand {
-    fn new(line: &str) -> Self {
-        let arr: Vec<_> = line.split_ascii_whitespace().collect();
-        let (hand, bid) = (arr[0], arr[1]);
-
-        let cards: Vec<Card> = hand.chars().map(Card::new).collect();
-        let hand_type = HandType::new(&cards);
-        let bid: u64 = bid.parse().expect("error parsing bid");
-
-        Self {
-            hand_type,
-            cards,
-            rank: 0,
-            bid,
-        }
-    }
-
-    fn set_rank(&mut self, idx: usize) {
-        self.rank = (idx + 1) as u64;
-    }
-
-    fn compare_cards(&self, other: &Hand) -> Ordering {
-        if self.hand_type == other.hand_type {
-            let mut i = 0;
-            while i < 5 && self.cards[i] == other.cards[i] {
-                i += 1;
-            }
-            other.cards[i.min(4)].cmp(&self.cards[i.min(4)])
-        } else {
-            self.cmp(&other)
-        }
-    }
-
-    fn get_payout(&self) -> u64 {
-        self.rank * self.bid
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum HandTypeAlt {
-    FiveOfAKind,
-    FourOfAKind,
-    FullHouse,
-    ThreeOfAKind,
-    TwoPair,
-    OnePair,
-    HighCard,
-}
-
-impl HandTypeAlt {
-    fn new(cards: &Vec<CardAlt>) -> Self {
-        use std::collections::HashMap;
-
-        let arr: Vec<Vec<CardAlt>> = [
-            CardAlt::Two,
-            CardAlt::Three,
-            CardAlt::Four,
-            CardAlt::Five,
-            CardAlt::Six,
-            CardAlt::Seven,
-            CardAlt::Eight,
-            CardAlt::Nine,
-            CardAlt::Ten,
-            CardAlt::Queen,
-            CardAlt::King,
-            CardAlt::Ace,
-        ]
-        .into_iter()
-        .map(|c| {
-            cards
-                .clone()
+fn get_best_score(hand: &mut Vec<u64>) {
+    let mut possible_hands: Vec<Vec<u64>> = (1..13)
+        .map(|b| {
+            hand.clone()
                 .into_iter()
-                .map(|o| if o == CardAlt::Joker { c } else { o })
+                .zip(0..)
+                .map(|(c, i)| if i > 0 && i < 6 && c == 0 { b } else { c })
                 .collect()
         })
         .collect();
-
-        let mut hands: Vec<_> = arr
-            .into_iter()
-            .map(|cards| {
-                let mut map: HashMap<CardAlt, u32> = HashMap::new();
-                cards.into_iter().for_each(|c| {
-                    map.entry(c).and_modify(|v| *v += 1).or_insert(1);
-                });
-
-                if map.values().any(|&v| v >= 5) {
-                    Self::FiveOfAKind
-                } else if map.values().any(|&v| v >= 4) {
-                    Self::FourOfAKind
-                } else if map.values().any(|&v| v >= 3)
-                    && map.values().filter(|&&v| v >= 3 || v >= 2).count() == 2
-                {
-                    Self::FullHouse
-                } else if map.values().any(|&v| v >= 3) {
-                    Self::ThreeOfAKind
-                } else if map.values().filter(|&&v| v >= 2).count() == 2 {
-                    Self::TwoPair
-                } else if map.values().any(|&v| v >= 2) {
-                    Self::OnePair
-                } else {
-                    Self::HighCard
-                }
-            })
-            .collect();
-
-        hands.sort_unstable();
-        hands[0].clone()
-    }
+    possible_hands.iter_mut().for_each(score_hand);
+    possible_hands.sort_unstable_by(sort_hand);
+    *hand = possible_hands[0].clone();
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-enum HandType {
-    FiveOfAKind,
-    FourOfAKind,
-    FullHouse,
-    ThreeOfAKind,
-    TwoPair,
-    OnePair,
-    HighCard,
+fn sum_payout(hands: Vec<Vec<u64>>) -> u64 {
+    hands.into_iter().map(|h| h[7] * h[6]).sum()
 }
 
-impl HandType {
-    fn new(cards: &Vec<Card>) -> Self {
-        use std::collections::HashMap;
+fn sort_and_rank(hands: &mut Vec<Vec<u64>>) {
+    hands.sort_unstable_by(sort_hand);
+    assign_rank(hands);
+}
 
-        let mut map: HashMap<Card, u32> = HashMap::new();
-        cards.into_iter().for_each(|c| {
-            map.entry(*c).and_modify(|v| *v += 1).or_insert(1);
-        });
-
-        if map.values().any(|&v| v == 5) {
-            Self::FiveOfAKind
-        } else if map.values().any(|&v| v == 4) {
-            Self::FourOfAKind
-        } else if map.values().any(|&v| v == 3)
-            && map.values().filter(|&&v| v == 3 || v == 2).count() == 2
-        {
-            Self::FullHouse
-        } else if map.values().any(|&v| v == 3) {
-            Self::ThreeOfAKind
-        } else if map.values().filter(|&&v| v == 2).count() == 2 {
-            Self::TwoPair
-        } else if map.values().any(|&v| v == 2) {
-            Self::OnePair
-        } else {
-            Self::HighCard
+fn sort_hand(a: &Vec<u64>, b: &Vec<u64>) -> std::cmp::Ordering {
+    if a[0] == b[0] {
+        let mut i = 0;
+        while i < 6 && a[i] == b[i] {
+            i += 1;
         }
+        b[i.min(5)].cmp(&a[i.min(5)])
+    } else {
+        b.cmp(&a)
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum CardAlt {
-    Joker,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Queen,
-    King,
-    Ace,
-}
-
-impl CardAlt {
-    fn new(card: char) -> Self {
-        match card {
-            'J' => Self::Joker,
-            '2' => Self::Two,
-            '3' => Self::Three,
-            '4' => Self::Four,
-            '5' => Self::Five,
-            '6' => Self::Six,
-            '7' => Self::Seven,
-            '8' => Self::Eight,
-            '9' => Self::Nine,
-            'T' => Self::Ten,
-            'Q' => Self::Queen,
-            'K' => Self::King,
-            'A' => Self::Ace,
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Card {
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Jack,
-    Queen,
-    King,
-    Ace,
-}
-
-impl Card {
-    fn new(card: char) -> Self {
-        match card {
-            '2' => Self::Two,
-            '3' => Self::Three,
-            '4' => Self::Four,
-            '5' => Self::Five,
-            '6' => Self::Six,
-            '7' => Self::Seven,
-            '8' => Self::Eight,
-            '9' => Self::Nine,
-            'T' => Self::Ten,
-            'J' => Self::Jack,
-            'Q' => Self::Queen,
-            'K' => Self::King,
-            'A' => Self::Ace,
-            _ => unreachable!(),
-        }
-    }
+fn assign_rank(hands: &mut Vec<Vec<u64>>) {
+    hands.iter_mut().rev().zip(1..).for_each(|(h, i)| h[6] = i);
 }
 
 #[cfg(test)]
