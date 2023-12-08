@@ -1,9 +1,6 @@
-#![allow(dead_code, unused_variables, unused_mut)]
-
 use std::collections::HashMap;
 
 fn main() -> std::io::Result<()> {
-    let test = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day08/src/test.txt")?;
     let input = std::fs::read_to_string("/home/rburd/code/rust/2023_AOC/day08/src/input.txt")?;
 
     let p1 = part_1(&input);
