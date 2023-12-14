@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 fn main() {
     let test_data = include_str!("test.txt");
     let actual_data = include_str!("input.txt");
@@ -18,7 +20,8 @@ fn main() {
 fn solve(part: usize) -> impl Fn(&str) -> usize {
     move |input| {
         parse_input(input)
-            .into_iter()
+            .par_iter()
+            .cloned()
             .map(get_axis_wrap(part - 1))
             .sum()
     }
