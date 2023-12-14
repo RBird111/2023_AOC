@@ -14,10 +14,10 @@ fn main() {
 fn part_1(input: &str) -> usize {
     let mut panel = parse_input(input);
     roll_north(&mut panel);
-    caclulate_load(&panel)
+    calculate_load(&panel)
 }
 
-fn caclulate_load(panel: &Vec<Vec<char>>) -> usize {
+fn calculate_load(panel: &Vec<Vec<char>>) -> usize {
     panel
         .iter()
         .enumerate()
