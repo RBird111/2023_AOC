@@ -14,11 +14,11 @@ fn main() {
     let p1 = part_1(input);
     println!("[PART 1]: {p1}");
 
-    // let t2 = part_2(test);
-    // println!("[TEST 2]: {t2}");
+    let t2 = part_2(test);
+    println!("[TEST 2]: {t2}");
 
-    // let p2 = part_2(input);
-    // println!("[PART 2]: {p2}");
+    let p2 = part_2(input);
+    println!("[PART 2]: {p2}");
 }
 
 fn part_1(input: &str) -> usize {
@@ -39,10 +39,7 @@ fn part_2(input: &str) -> usize {
         [Box::new(|y| (-1, y, 1, 0)), Box::new(|y| (h, y, -1, 0))];
     let col = c_funcs.into_iter().flat_map(|fun| (0..w).map(fun));
 
-    row.chain(col)
-        .map(reflect)
-        .max()
-        .unwrap()
+    row.chain(col).map(reflect).max().unwrap()
 }
 
 fn make_disco(grid: Vec<Vec<char>>) -> impl Fn(Beam) -> usize {
@@ -52,14 +49,12 @@ fn make_disco(grid: Vec<Vec<char>>) -> impl Fn(Beam) -> usize {
         let mut states: HashSet<(isize, isize, isize, isize)> = HashSet::new();
         let mut positions: HashSet<(isize, isize)> = HashSet::new();
 
-        let mut stack = vec![(0, -1, 0, 1)];
+        let mut stack = vec![start];
 
         while let Some((mut x, mut y, mut dx, mut dy)) = stack.pop() {
-            if states.contains(&(x, y, dx, dy)) {
+            if !states.insert((x, y, dx, dy)) {
                 continue;
             }
-
-            states.insert((x, y, dx, dy));
 
             x += dx;
             y += dy;
