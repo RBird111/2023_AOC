@@ -1,5 +1,3 @@
-#![allow(unused_mut, unused_variables, dead_code)]
-
 use std::collections::VecDeque;
 
 fn main() {
@@ -24,19 +22,15 @@ fn part_1(input: &str) -> usize {
 }
 
 fn part_2(input: &str) -> usize {
-    let mut map = BoxMap::new();
-    for instruction in parse_input(input) {
-        map.parse_op(instruction);
-    }
-    map.calculate_focus()
+    parse_input(input)
+        .into_iter()
+        .fold(BoxMap::new(), BoxMap::parse_op)
+        .calculate_focus()
 }
 
 fn get_hash(s: &str) -> usize {
+    let hash = |curr: usize, c: char| ((curr + (c as usize)) * 17) % 256;
     s.chars().fold(0, hash)
-}
-
-fn hash(curr: usize, c: char) -> usize {
-    ((curr + (c as usize)) * 17) % 256
 }
 
 fn parse_input(input: &str) -> Vec<&str> {
@@ -118,12 +112,13 @@ impl BoxMap {
             .sum()
     }
 
-    fn parse_op(&mut self, instruction: &str) {
-        let idx = instruction
+    fn parse_op(mut self, op: &str) -> Self {
+        let idx = op
             .char_indices()
             .find_map(|(i, c)| ['-', '='].contains(&c).then(|| i))
             .unwrap();
-        let (label, op) = instruction.split_at(idx);
+
+        let (label, op) = op.split_at(idx);
         let label_hash = Self::get_hash(label);
 
         let lens_box = &mut self.boxes[label_hash];
@@ -137,12 +132,12 @@ impl BoxMap {
                 lens_box.add(new_lens)
             }
         }
+
+        self
     }
 
     fn get_hash(s: &str) -> usize {
-        fn hash(curr: usize, c: char) -> usize {
-            ((curr + (c as usize)) * 17) % 256
-        }
+        let hash = |curr: usize, c: char| ((curr + (c as usize)) * 17) % 256;
         s.chars().fold(0, hash)
     }
 }
