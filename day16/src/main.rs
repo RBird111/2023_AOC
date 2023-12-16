@@ -1,6 +1,7 @@
 #![allow(unused_mut, unused_variables, dead_code, unused_imports)]
 
-use std::collections::HashSet;
+use rayon::prelude::*;
+use std::{collections::HashSet, ops::Range};
 
 type Beam = (isize, isize, isize, isize);
 
@@ -31,15 +32,10 @@ fn part_2(input: &str) -> usize {
 
     let reflect = make_disco(grid);
 
-    let r_funcs: [Box<dyn Fn(isize) -> Beam>; 2] =
-        [Box::new(|x| (x, -1, 0, 1)), Box::new(|x| (x, w, 0, -1))];
-    let row = r_funcs.into_iter().flat_map(|fun| (0..h).map(fun));
+    let rows = (0..h).flat_map(|x| [(x, -1, 0, 1), (x, w, 0, -1)]);
+    let cols = (0..w).flat_map(|y| [(-1, y, 1, 0), (h, y, -1, 0)]);
 
-    let c_funcs: [Box<dyn Fn(isize) -> Beam>; 2] =
-        [Box::new(|y| (-1, y, 1, 0)), Box::new(|y| (h, y, -1, 0))];
-    let col = c_funcs.into_iter().flat_map(|fun| (0..w).map(fun));
-
-    row.chain(col).map(reflect).max().unwrap()
+    rows.chain(cols).par_bridge().map(reflect).max().unwrap()
 }
 
 fn make_disco(grid: Vec<Vec<char>>) -> impl Fn(Beam) -> usize {
