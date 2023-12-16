@@ -1,7 +1,5 @@
-#![allow(unused_mut, unused_variables, dead_code, unused_imports)]
-
 use rayon::prelude::*;
-use std::{collections::HashSet, ops::Range};
+use std::collections::HashSet;
 
 type Beam = (isize, isize, isize, isize);
 
