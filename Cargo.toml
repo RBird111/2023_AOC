@@ -4,5 +4,6 @@ resolver = "2"
 
 [workspace.dependencies]
 lazy_static = "1.4.0"
+parse-display = "0.8.2"
 rayon = "1.8.0"
 regex = "1.10.2"
